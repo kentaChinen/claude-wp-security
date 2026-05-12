@@ -41,17 +41,23 @@
 ## クリーンアップワークフロー
 
 ```
+/memo show（過去のナレッジベースを確認 ← 2回目以降の検査で特に重要）
+     ↓
 /security-audit（総合監査・ファイル検査）
      ↓ DB ファイル（.sql）がある場合
 /db-scan [ファイル]（DB内のマルウェア・不審アカウント検査）
      ↓ uploads を移行する場合
 /uploads-scan [ディレクトリ]（PHP混入・偽装・スクリプト注入検査）
+     ↓ 新しいパターン・IOC を発見したら随時
+/memo add（発見内容をナレッジベースに記録）
      ↓ 問題が見つかった場合
 /malware-clean [ファイル]（検疫・削除）
      ↓
 /htaccess-security（.htaccessの強化）
      ↓
 site-hardener エージェント（パーミッション・設定の堅牢化）
+     ↓ 重要な発見があれば
+/memo promote（CLAUDE.md・スキルファイルへ昇格）
 ```
 
 個別スキルの直接実行も可能：
@@ -61,6 +67,32 @@ site-hardener エージェント（パーミッション・設定の堅牢化）
 /db-scan           → DB の検査のみ
 /uploads-scan      → uploads の検査のみ
 /htaccess-security → .htaccess レビューのみ
+/memo              → ナレッジベースの記録・検索
+```
+
+---
+
+## ナレッジベース（脅威インテリジェンス）
+
+検査中に発見したパターン・IOC・手法・メモを `.claude/threat-intel/` に蓄積します。
+蓄積した情報は次回以降の検査で `/security-audit` と `/malware-scan` が自動参照します。
+
+| ファイル | 内容 | 追記コマンド |
+|---------|------|------------|
+| `.claude/threat-intel/patterns.md` | 悪意あるコードパターン | `/memo add pattern` |
+| `.claude/threat-intel/ioc.md` | IOC（URL・IP・ドメイン・ハッシュ） | `/memo add ioc` |
+| `.claude/threat-intel/techniques.md` | 攻撃手法・感染経路 | `/memo add technique` |
+| `.claude/threat-intel/notes.md` | その他メモ・気になる事項 | `/memo add note` |
+
+**操作例:**
+```
+/memo add pattern eval(str_rot13(...)) — テーマのfunctions.phpで発見
+/memo add ioc malicious-cdn.ru — wp_optionsのスクリプト注入で使われた外部CDN
+/memo add technique ファイルアップロードフォーム経由でWebシェルを配置
+/memo add note 管理画面ログインURLが変更されている（wp-login.phpが存在しない）
+/memo search eval        — evalを含むメモを検索
+/memo show pattern       — コードパターン一覧を表示
+/memo promote            — 重要な発見をCLAUDE.mdやスキルファイルへ昇格
 ```
 
 ---
@@ -81,6 +113,8 @@ site-hardener エージェント（パーミッション・設定の堅牢化）
 - スキャン結果に疑いファイルが多い場合は `malware-investigator` エージェントに深掘り分析を依頼する。
 - クリーンアップ完了後は `site-hardener` エージェントでパーミッション・.htaccess・wp-config を確認する。
 - `/security-audit` と `/malware-scan` は WordPress ルート全体（`../../../`）を対象にすること。テーマだけでは不十分。
+- **新しいパターン・IOC・手法を発見したら `/memo add` で即座に記録すること。** 次回の検査精度が向上する。
+- 重要度の高い発見（再現性のある手口・確認済みマルウェア）は `/memo promote` で各ファイルへ昇格させること。
 
 ---
 
@@ -103,6 +137,12 @@ site-hardener エージェント（パーミッション・設定の堅牢化）
     │   │   ├── db-scan/SKILL.md             (/db-scan)
     │   │   ├── uploads-scan/SKILL.md        (/uploads-scan)
     │   │   ├── htaccess-security/SKILL.md   (/htaccess-security)
+    │   │   ├── memo/SKILL.md                (/memo) ← ナレッジベース管理
+    │   │   ├── threat-intel/                ← 蓄積された脅威情報
+    │   │   │   ├── patterns.md              ← コードパターン
+    │   │   │   ├── ioc.md                   ← IOC（URL・IP・ドメイン・ハッシュ）
+    │   │   │   ├── techniques.md            ← 攻撃手法
+    │   │   │   └── notes.md                 ← メモ
     │   │   └── agents/
     │   │       ├── malware-investigator.md  ← 深掘り分析
     │   │       └── site-hardener.md         ← 堅牢化
@@ -124,6 +164,7 @@ site-hardener エージェント（パーミッション・設定の堅牢化）
 | `/db-scan [.sqlファイル]` | **DB 検査**（不審アカウント・スクリプト注入・設定改ざん） | 移行前の DB 検査 |
 | `/uploads-scan [ディレクトリ]` | **uploads 検査**（PHP混入・偽装・SVGスクリプト注入） | 移行前の uploads 検査 |
 | `/htaccess-security [パス]` | .htaccess のセキュリティ設定をレビュー・追記 | 設定強化したい時 |
+| `/memo [add\|show\|search\|promote]` | **ナレッジベース管理**（パターン・IOC・手法・メモの記録と活用） | 発見随時・検査前後 |
 
 ## エージェント一覧
 
