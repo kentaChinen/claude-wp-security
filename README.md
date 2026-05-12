@@ -15,7 +15,7 @@ WordPress サイトのマルウェア検出・クリーンアップ・移行を 
 
 ## インストール
 
-````bash
+```bash
 cd /path/to/wp-content/themes/[your-theme]
 
 git clone https://github.com/kentaChinen/claude-wp-security.git tmp-security
@@ -116,12 +116,4 @@ STEP5. DNS 切り替え・WAF 導入・最終確認
 ライセンス
 
 MIT
-
-このまま `README.md` として保存して問題なければ、続けてコミット・プッシュできます：
-
-```bash
-# README.md を作成後
-git add README.md
-git commit -m "Add README"
-git push
-````
+```
